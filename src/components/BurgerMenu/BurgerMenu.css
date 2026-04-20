@@ -35,3 +35,10 @@
   .menu-content a:hover {
     background-color: #f0f0f0;
   }
+
+  .admin-link {
+    background-color: #ffebee;
+    border-left: 3px solid #f44336;
+    font-weight: bold;
+    color: #d32f2f;
+  }

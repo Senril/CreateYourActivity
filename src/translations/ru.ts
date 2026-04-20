@@ -1,6 +1,7 @@
 import { Translations } from '../types/translations';
 
 const ru: Translations = {
+  // Основные элементы интерфейса
   viewActivities: "Просмотр активностей",
   createActivity: "Создать активность",
   settings: "Настройки",
@@ -19,8 +20,151 @@ const ru: Translations = {
   location: "Место",
   date: "Дата",
   description: "Описание",
+  creator: "Создатель",
+  participants: "Участники",
   create: "Создать",
-  maxPeople: "Макс. участников"
+  maxPeople: "Макс. участников",
+  adminPanel: "Админ-панель",
+  edit: "Изменить",
+  category: "Категория",
+  unlimitedParticipants: "Без ограничения участников",
+  likes: "Лайки",
+  dislikes: "Дизлайки",
+  comments: "Комментарии",
+  writeComment: "Напишите ваш комментарий...",
+  send: "Отправить",
+  loadingComments: "Загрузка комментариев...",
+  noComments: "Пока нет комментариев. Будьте первым!",
+  rating: "Рейтинг",
+  editActivity: "Редактирование активности",
+  
+  // Страница рейтинга
+  activityRating: "Рейтинг активностей",
+  totalActivities: "Всего активностей",
+  totalLikes: "Всего лайков",
+  totalParticipants: "Всего участников",
+  sortCategoriesBy: "Сортировать категории по:",
+  byRating: "Рейтингу",
+  byActivities: "Количеству активностей",
+  byParticipants: "Участникам",
+  ratingByCategories: "Рейтинг по категориям",
+  activitiesCount: "Активности",
+  mostPopular: "Самые популярные",
+  mostAttended: "Самые посещаемые",
+  ranking: "Рейтинг",
+  categoryHeader: "Категория",
+  ratingHeader: "Рейтинг",
+  participantsHeader: "Участники",
+  activityTitle: "Название активности",
+  
+  // Админ-панель
+  adminDashboard: "Панель администратора",
+  superAdmin: "суперадминистратор",
+  regularAdmin: "обычный администратор",
+  manageAdmins: "Управление администраторами",
+  newAdminEmail: "Email нового администратора",
+  add: "Добавить",
+  currentAdmins: "Текущие администраторы:",
+  superAdminBadge: "Суперадмин",
+  remove: "Удалить",
+  allActivities: "Все активности",
+  deleteActivity: "Удалить активность",
+  accessDenied: "Доступ запрещён",
+  adminOnly: "Только администраторы имеют доступ к этой панели",
+  
+  // Страница активности
+  place: "Место",
+  start: "Начало",
+  end: "Окончание",
+  participantsCount: "Участники",
+  status: "Статус",
+  soon: "Скоро",
+  completed: "Завершено",
+  unknown: "Неизвестно",
+  
+  // Общие
+  saveChanges: "Сохранить изменения",
+  logout: "Выйти из аккаунта",
+  account: "Аккаунт",
+  loading: "Загрузка...",
+  confirmDelete: "Вы уверены, что хотите удалить?",
+  adminAdded: "Администратор успешно добавлен",
+  adminRemoved: "Администратор успешно удалён",
+  activityDeleted: "Активность успешно удалена",
+  activityUpdated: "Активность успешно обновлена",
+  error: "Ошибка",
+  success: "Успешно",
+  
+  // Страница входа
+  appName: "CreateYourActivity",
+  loginPrompt: "Войдите, чтобы продолжить",
+  loginWithGoogle: "Войти с помощью Google",
+  
+  // Кнопки и действия
+  details: "Подробнее",
+  change: "Изменить",
+  back: "Назад",
+  cancel: "Отмена",
+  confirm: "Подтвердить",
+  search: "Поиск",
+  filter: "Фильтр",
+  clear: "Очистить",
+  
+  // Меню и навигация
+  home: "Главная",
+  activities: "Активности",
+  adminPanelNav: "Админ-панель",
+  settingsNav: "Настройки",
+  ratingNav: "Рейтинг",
+  
+  // Сообщения
+  areYouSure: "Вы уверены?",
+  noActivitiesYet: "Активностей пока нет",
+  createFirstActivity: "Создайте первую активность!",
+  joinActivity: "Присоединиться к активности",
+  leaveActivity: "Покинуть активность",
+  commentAdded: "Комментарий добавлен",
+  commentError: "Ошибка при отправке комментария",
+  joinSuccess: "Вы присоединились к активности",
+  leaveSuccess: "Вы покинули активность",
+  
+  // Время
+  today: "Сегодня",
+  tomorrow: "Завтра",
+  yesterday: "Вчера",
+
+  willParticipate: "Вы будете участвовать",
+  participated: "Вы участвовали",
+  activityFinished: "Активность завершена",
+  cannotJoinFinished: "Нельзя присоединиться к завершенной активности",
+  cannotLeaveFinished: "Нельзя покинуть завершенную активность",
+
+  cannotJoinMaxParticipants: "Вы не можете присоединиться к данной активности, достигнуто максимальное количество участников.",
+  deleteComment: "Удалить комментарий",
+  confirmDeleteComment: "Вы уверены, что хотите удалить этот комментарий?",
+  commentDeleted: "Комментарий успешно удалён",
+
+  youLoggedAs: "Вы вошли как ",
+
+  firstName: "Имя",
+  lastName: "Фамилия",
+  enterFirstName: "Введите имя",
+  enterLastName: "Введите фамилию",
+  fullName: "Полное имя",
+  saveName: "Сохранить имя",
+  nameRequired: "Имя и фамилия обязательны",
+  nameUpdated: "Имя успешно обновлено",
+  completeProfile: "Завершите ваш профиль",
+  currentEmail: "Текущая почта",
+  changeName: "Изменить имя",
+  and: "и",
+
+  sortBy: "Сортировать по",
+  sortByDate: "Дате",
+  sortByLikes: "Лайкам",
+  sortByDislikes: "Дизлайкам",
+  sortByStatus: "Статусу",
+  changeLanguage: "Смена языка"
 };
 
 export default ru;

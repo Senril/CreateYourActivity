@@ -5,22 +5,16 @@ import ActivityItem from '../components/ActivityItem/ActivityItem';
 import './Home.css';
 import { useLanguage } from '../context/LanguageContext';
 import BurgerMenu from '../components/BurgerMenu/BurgerMenu';
+import { useAdmin } from '../context/AdminContext';
+import { Activity } from '../types/activity';
 
-interface Activity {
-  id: string;
-  title: string;
-  location: string;
-  startDate: string;
-  endDate: string;
-  maxPeople: number;
-  people: string[];
-  creatorId: string;
-  creatorEmail: string;
-}
+type SortOption = 'date' | 'likes' | 'dislikes' | 'status';
 
 export default function Home() {
   const [activities, setActivities] = useState<Activity[]>([]);
-  const { t, user } = useLanguage();
+  const [sortBy, setSortBy] = useState<SortOption>('date');
+  const { t } = useLanguage();
+  const { user, isAdmin, isSuperAdmin } = useAdmin();
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -34,33 +28,111 @@ export default function Home() {
         maxPeople: doc.data().maxPeople || 0,
         people: doc.data().people || [],
         creatorId: doc.data().creatorId || '',
-        creatorEmail: doc.data().creatorEmail || ''
-      } as Activity));
+        creatorEmail: doc.data().creatorEmail || '',
+        description: doc.data().description || '',
+        category: doc.data().category || 'Другое',
+        likes: doc.data().likes || [],
+        dislikes: doc.data().dislikes || []
+      })) as Activity[];
       setActivities(activitiesData);
     };
     fetchActivities();
   }, []);
 
   const handleDelete = async (id: string) => {
-    await deleteDoc(doc(db, 'activities', id));
-    setActivities(prev => prev.filter(a => a.id !== id));
+    if (window.confirm(t.areYouSure)) {
+      await deleteDoc(doc(db, 'activities', id));
+      setActivities(prev => prev.filter(a => a.id !== id));
+      alert(t.activityDeleted);
+    }
   };
+
+  // Функция для получения статуса активности
+  const getActivityStatus = (activity: Activity) => {
+    try {
+      const now = new Date();
+      const start = new Date(activity.startDate);
+      const end = new Date(activity.endDate);
+      
+      if (now < start) return 1; // upcoming
+      if (now > end) return 3; // finished
+      return 2; // active
+    } catch (error) {
+      return 0; // unknown
+    }
+  };
+
+  // Сортировка активностей
+  const sortedActivities = [...activities].sort((a, b) => {
+    switch (sortBy) {
+      case 'date':
+        return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+      case 'likes':
+        return b.likes.length - a.likes.length;
+      case 'dislikes':
+        return b.dislikes.length - a.dislikes.length;
+      case 'status':
+        return getActivityStatus(a) - getActivityStatus(b);
+      default:
+        return 0;
+    }
+  });
 
   return (
     <div className="home-page">
       <BurgerMenu />
       <div className="content">
-        <h1>{t.viewActivities}</h1>
-        <div className="activities-list">
-          {activities.map(activity => (
-            <ActivityItem 
-              key={activity.id}
-              activity={activity}
-              currentUserId={user?.uid || ''}
-              onDelete={handleDelete}
-            />
-          ))}
+        <div className="header-section">
+          <h1>{t.viewActivities}</h1>
+          <div className="sort-controls">
+            <span className="sort-label">{t.sortBy}:</span>
+            <div className="sort-buttons">
+              <button 
+                className={sortBy === 'date' ? 'active' : ''}
+                onClick={() => setSortBy('date')}
+              >
+                {t.sortByDate}
+              </button>
+              <button 
+                className={sortBy === 'likes' ? 'active' : ''}
+                onClick={() => setSortBy('likes')}
+              >
+                {t.sortByLikes}
+              </button>
+              <button 
+                className={sortBy === 'dislikes' ? 'active' : ''}
+                onClick={() => setSortBy('dislikes')}
+              >
+                {t.sortByDislikes}
+              </button>
+              <button 
+                className={sortBy === 'status' ? 'active' : ''}
+                onClick={() => setSortBy('status')}
+              >
+                {t.sortByStatus}
+              </button>
+            </div>
+          </div>
         </div>
+        {sortedActivities.length === 0 ? (
+          <div className="no-activities">
+            <p>{t.noActivitiesYet}</p>
+            <p>{t.createFirstActivity}</p>
+          </div>
+        ) : (
+          <div className="activities-list">
+            {sortedActivities.map(activity => (
+              <ActivityItem 
+                key={activity.id}
+                activity={activity}
+                currentUserId={user?.uid || ''}
+                isAdmin={isAdmin}
+                isSuperAdmin={isSuperAdmin}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

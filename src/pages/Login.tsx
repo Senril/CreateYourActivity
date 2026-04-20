@@ -2,9 +2,11 @@ import { auth, googleProvider } from '../services/firebase';
 import { signInWithPopup } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const handleGoogleLogin = async () => {
     try {
@@ -18,10 +20,10 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="login-container">
-        <h1>CreateYourActivity</h1>
-        <p>Войдите, чтобы продолжить</p>
+        <h1>{t.appName}</h1>
+        <p>{t.loginPrompt}</p>
         <button onClick={handleGoogleLogin} className="google-login-btn">
-          Войти c помощью Google
+          {t.loginWithGoogle}
         </button>
       </div>
     </div>

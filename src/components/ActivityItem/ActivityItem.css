@@ -1,70 +1,240 @@
 .activity-item {
+  position: relative;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 15px;
+  margin: 12px auto;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  max-width: 550px;
   width: 100%;
-  max-width: 600px;
-  padding: 20px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.activity-header {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  box-sizing: border-box;
 }
 
-.activity-header h3 {
-  margin: 0;
-  font-size: 1.2rem;
+/* Категория активности */
+.activity-category {
+  margin-bottom: 12px;
+  width: 100%;
 }
 
-.delete-btn {
-  background: #ff4444;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
+.category-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.activity-meta {
+/* Кнопки управления в правом верхнем углу */
+.activity-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: #555;
-  margin-bottom: 15px;
+  z-index: 10;
+  align-items: flex-end;
 }
 
-.status-indicator {
+.edit-button {
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s;
+  text-decoration: none;
+  text-align: center;
+  min-width: 80px;
+}
+
+.edit-button:hover {
+  background: #1976d2;
+}
+
+.delete-button {
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s;
+  min-width: 80px;
+}
+
+.delete-button:hover {
+  background: #cc0000;
+}
+
+/* Заголовок карточки */
+.activity-title {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 20px;
+  font-weight: 600;
+  word-break: break-word;
+  padding-right: 100px;
+  width: 100%;
+  text-align: left;
+}
+
+.activity-info {
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.activity-row {
+  display: flex;
+  margin-bottom: 8px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.label {
+  font-weight: 600;
+  color: #555;
+  min-width: 120px;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+.value {
+  color: #333;
+  line-height: 1.4;
+  flex: 1;
+  text-align: left;
+}
+
+.status {
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+/* Нижняя часть карточки */
+.activity-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+  width: 100%;
+  gap: 10px;
+}
+
+.footer-left,
+.footer-center,
+.footer-right {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 10px;
 }
 
-.status-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+.footer-right {
+  flex-shrink: 0;
 }
 
-.details-btn {
-  display: inline-block;
-  padding: 8px 15px;
-  background-color: #4a76a8;
+/* Кнопка "Подробнее" в левом нижнем углу */
+.details-button {
+  background: #1976d2;
   color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s;
   text-decoration: none;
-  border-radius: 4px;
+  display: inline-block;
   text-align: center;
 }
 
+.details-button:hover {
+  background: #1565c0;
+}
+
+/* Бейдж участия */
 .participation-badge {
   background-color: #4CAF50;
   color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  margin-top: 5px;
-  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Кнопки лайка/дизлайка */
+.rating-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.like-button,
+.dislike-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+}
+
+.like-button:hover {
+  border-color: #4CAF50;
+  background-color: #f1f8e9;
+}
+
+.dislike-button:hover {
+  border-color: #f44336;
+  background-color: #ffebee;
+}
+
+.like-button.active {
+  background-color: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+}
+
+.dislike-button.active {
+  background-color: #f44336;
+  color: white;
+  border-color: #f44336;
+}
+
+.like-button.active .icon,
+.dislike-button.active .icon {
+  color: white;
+}
+
+.like-button .icon {
+  color: #4CAF50;
+}
+
+.dislike-button .icon {
+  color: #f44336;
+}
+
+.count {
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
 }

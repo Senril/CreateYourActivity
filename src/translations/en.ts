@@ -1,6 +1,7 @@
 import { Translations } from '../types/translations';
 
 const en: Translations = {
+  // Основные элементы интерфейса
   viewActivities: "View activities",
   createActivity: "Create activity",
   settings: "Settings",
@@ -19,8 +20,151 @@ const en: Translations = {
   location: "Location",
   date: "Date",
   description: "Description",
+  creator: "Creator",
+  participants: "Participants",
   create: "Create",
-  maxPeople: "Max participants"
+  maxPeople: "Max participants",
+  adminPanel: "Admin Panel",
+  edit: "Edit",
+  category: "Category",
+  unlimitedParticipants: "Unlimited participants",
+  likes: "Likes",
+  dislikes: "Dislikes",
+  comments: "Comments",
+  writeComment: "Write your comment...",
+  send: "Send",
+  loadingComments: "Loading comments...",
+  noComments: "No comments yet. Be the first!",
+  rating: "Rating",
+  editActivity: "Edit Activity",
+  
+  // Страница рейтинга
+  activityRating: "Activity Rating",
+  totalActivities: "Total activities",
+  totalLikes: "Total likes",
+  totalParticipants: "Total participants",
+  sortCategoriesBy: "Sort categories by:",
+  byRating: "Rating",
+  byActivities: "Number of activities",
+  byParticipants: "Participants",
+  ratingByCategories: "Rating by categories",
+  activitiesCount: "Activities",
+  mostPopular: "Most popular",
+  mostAttended: "Most attended",
+  ranking: "Ranking",
+  categoryHeader: "Category",
+  ratingHeader: "Rating",
+  participantsHeader: "Participants",
+  activityTitle: "Activity title",
+  
+  // Админ-панель
+  adminDashboard: "Admin Dashboard",
+  superAdmin: "super administrator",
+  regularAdmin: "regular administrator",
+  manageAdmins: "Manage administrators",
+  newAdminEmail: "New admin email",
+  add: "Add",
+  currentAdmins: "Current administrators:",
+  superAdminBadge: "Super Admin",
+  remove: "Remove",
+  allActivities: "All activities",
+  deleteActivity: "Delete activity",
+  accessDenied: "Access denied",
+  adminOnly: "Only administrators have access to this panel",
+  
+  // Страница активности
+  place: "Place",
+  start: "Start",
+  end: "End",
+  participantsCount: "Participants",
+  status: "Status",
+  soon: "Soon",
+  completed: "Completed",
+  unknown: "Unknown",
+  
+  // Общие
+  saveChanges: "Save changes",
+  logout: "Logout",
+  account: "Account",
+  loading: "Loading...",
+  confirmDelete: "Are you sure you want to delete?",
+  adminAdded: "Administrator added successfully",
+  adminRemoved: "Administrator removed successfully",
+  activityDeleted: "Activity deleted successfully",
+  activityUpdated: "Activity updated successfully",
+  error: "Error",
+  success: "Success",
+  
+  // Страница входа
+  appName: "CreateYourActivity",
+  loginPrompt: "Sign in to continue",
+  loginWithGoogle: "Sign in with Google",
+  
+  // Кнопки и действия
+  details: "Details",
+  change: "Change",
+  back: "Back",
+  cancel: "Cancel",
+  confirm: "Confirm",
+  search: "Search",
+  filter: "Filter",
+  clear: "Clear",
+  
+  // Меню и навигация
+  home: "Home",
+  activities: "Activities",
+  adminPanelNav: "Admin Panel",
+  settingsNav: "Settings",
+  ratingNav: "Rating",
+  
+  // Сообщения
+  areYouSure: "Are you sure?",
+  noActivitiesYet: "No activities yet",
+  createFirstActivity: "Create first activity!",
+  joinActivity: "Join activity",
+  leaveActivity: "Leave activity",
+  commentAdded: "Comment added",
+  commentError: "Error sending comment",
+  joinSuccess: "You joined the activity",
+  leaveSuccess: "You left the activity",
+  
+  // Время
+  today: "Today",
+  tomorrow: "Tomorrow",
+  yesterday: "Yesterday",
+
+  willParticipate: "You will participate",
+  participated: "You participated",
+  activityFinished: "Activity finished",
+  cannotJoinFinished: "Cannot join finished activity",
+  cannotLeaveFinished: "Cannot leave finished activity",
+
+  cannotJoinMaxParticipants: "You cannot join this activity, the maximum number of participants has been reached.",
+  deleteComment: "Delete comment",
+  confirmDeleteComment: "Are you sure you want to delete this comment?",
+  commentDeleted: "Comment deleted successfully",
+
+  youLoggedAs: "You are logged in as an ",
+
+  firstName: "First name",
+  lastName: "Last name",
+  enterFirstName: "Enter first name",
+  enterLastName: "Enter last name",
+  fullName: "Full name",
+  saveName: "Save name",
+  nameRequired: "First and last name are required",
+  nameUpdated: "Name successfully updated",
+  completeProfile: "Complete your profile",
+  currentEmail: "Current email",
+  changeName: "Change name",
+  and: "and",
+
+  sortBy: "Sort by",
+  sortByDate: "Date",
+  sortByLikes: "Likes",
+  sortByDislikes: "Dislikes",
+  sortByStatus: "Status",
+  changeLanguage: "Change language"
 };
 
 export default en;

@@ -1,57 +1,172 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import { Translations } from '../types/translations';
 import ru from '../translations/ru';
 import en from '../translations/en';
-import { auth } from '../services/firebase';
-import { User } from 'firebase/auth';
 
 interface LanguageContextType {
   language: 'ru' | 'en';
   setLanguage: (lang: 'ru' | 'en') => void;
   t: Translations;
-  user: User | null;
 }
 
-const translations: { ru: Translations; en: Translations } = {
-  ru: {
-    ...ru,
-    leave: ru.leave || 'Покинуть',
-    delete: ru.delete || 'Удалить',
-    active: ru.active || 'Активно',
-    upcoming: ru.upcoming || 'Скоро',
-    finished: ru.finished || 'Завершено',
-    maxPeople: ru.maxPeople || 'Макс. участников'
-  },
-  en: {
-    ...en,
-    leave: en.leave || 'Leave',
-    delete: en.delete || 'Delete',
-    active: en.active || 'Active',
-    upcoming: en.upcoming || 'Upcoming',
-    finished: en.finished || 'Finished',
-    maxPeople: en.maxPeople || 'Max participants'
-  }
+const defaultTranslations: Translations = {
+  viewActivities: "View activities",
+  createActivity: "Create activity",
+  settings: "Settings",
+  language: "English",
+  viewDetails: "Details",
+  join: "Join",
+  leave: "Leave",
+  startTimeLabel: "Start time",
+  endTimeLabel: "End time",
+  youParticipate: "You participate",
+  delete: "Delete",
+  active: "Active",
+  upcoming: "Upcoming",
+  finished: "Finished",
+  title: "Title",
+  location: "Location",
+  date: "Date",
+  description: "Description",
+  creator: "Creator",
+  participants: "Participants",
+  create: "Create",
+  maxPeople: "Max participants",
+  adminPanel: "Admin Panel",
+  edit: "Edit",
+  category: "Category",
+  unlimitedParticipants: "Unlimited participants",
+  likes: "Likes",
+  dislikes: "Dislikes",
+  comments: "Comments",
+  writeComment: "Write your comment...",
+  send: "Send",
+  loadingComments: "Loading comments...",
+  noComments: "No comments yet. Be the first!",
+  rating: "Rating",
+  editActivity: "Edit Activity",
+  activityRating: "Activity Rating",
+  totalActivities: "Total activities",
+  totalLikes: "Total likes",
+  totalParticipants: "Total participants",
+  sortCategoriesBy: "Sort categories by:",
+  byRating: "Rating",
+  byActivities: "Number of activities",
+  byParticipants: "Participants",
+  ratingByCategories: "Rating by categories",
+  activitiesCount: "Activities",
+  mostPopular: "Most popular",
+  mostAttended: "Most attended",
+  ranking: "Ranking",
+  categoryHeader: "Category",
+  ratingHeader: "Rating",
+  participantsHeader: "Participants",
+  activityTitle: "Activity title",
+  adminDashboard: "Admin Dashboard",
+  superAdmin: "super administrator",
+  regularAdmin: "regular administrator",
+  manageAdmins: "Manage administrators",
+  newAdminEmail: "New admin email",
+  add: "Add",
+  currentAdmins: "Current administrators:",
+  superAdminBadge: "Super Admin",
+  remove: "Remove",
+  allActivities: "All activities",
+  deleteActivity: "Delete activity",
+  accessDenied: "Access denied",
+  adminOnly: "Only administrators have access to this panel",
+  place: "Place",
+  start: "Start",
+  end: "End",
+  participantsCount: "Participants",
+  status: "Status",
+  soon: "Soon",
+  completed: "Completed",
+  unknown: "Unknown",
+  saveChanges: "Save changes",
+  logout: "Logout",
+  account: "Account",
+  loading: "Loading...",
+  confirmDelete: "Are you sure you want to delete?",
+  adminAdded: "Administrator added successfully",
+  adminRemoved: "Administrator removed successfully",
+  activityDeleted: "Activity deleted successfully",
+  activityUpdated: "Activity updated successfully",
+  error: "Error",
+  success: "Success",
+  appName: "CreateYourActivity",
+  loginPrompt: "Sign in to continue",
+  loginWithGoogle: "Sign in with Google",
+  details: "Details",
+  change: "Change",
+  back: "Back",
+  cancel: "Cancel",
+  confirm: "Confirm",
+  search: "Search",
+  filter: "Filter",
+  clear: "Clear",
+  home: "Home",
+  activities: "Activities",
+  adminPanelNav: "Admin Panel",
+  settingsNav: "Settings",
+  ratingNav: "Rating",
+  areYouSure: "Are you sure?",
+  noActivitiesYet: "No activities yet",
+  createFirstActivity: "Create first activity!",
+  joinActivity: "Join activity",
+  leaveActivity: "Leave activity",
+  commentAdded: "Comment added",
+  commentError: "Error sending comment",
+  joinSuccess: "You joined the activity",
+  leaveSuccess: "You left the activity",
+  today: "Today",
+  tomorrow: "Tomorrow",
+  yesterday: "Yesterday",
+  willParticipate: "You will participate",
+  participated: "You participated",
+  activityFinished: "Activity finished",
+  cannotJoinFinished: "Cannot join finished activity",
+  cannotLeaveFinished: "Cannot leave finished activity",
+  cannotJoinMaxParticipants: "You cannot join this activity, the maximum number of participants has been reached.",
+  deleteComment: "Delete comment",
+  confirmDeleteComment: "Are you sure you want to delete this comment?",
+  commentDeleted: "Comment deleted successfully",
+  youLoggedAs: "You are logged in as an ",
+  firstName: "First name",
+  lastName: "Last name",
+  enterFirstName: "Enter first name",
+  enterLastName: "Enter last name",
+  fullName: "Full name",
+  saveName: "Save name",
+  nameRequired: "First and last name are required",
+  nameUpdated: "Name successfully updated",
+  completeProfile: "Complete your profile",
+  currentEmail: "Current email",
+  changeName: "Change name",
+  and: "and",
+  sortBy: "Sort by",
+  sortByDate: "Date",
+  sortByLikes: "Likes",
+  sortByDislikes: "Dislikes",
+  sortByStatus: "Status",
+  changeLanguage: "Change language"
+};
+
+const translations = {
+  ru: { ...defaultTranslations, ...ru },
+  en: { ...defaultTranslations, ...en }
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<'ru' | 'en'>('ru');
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-    });
-    return unsubscribe;
-  }, []);
 
   return (
     <LanguageContext.Provider value={{ 
       language, 
       setLanguage, 
-      t: translations[language],
-      user
+      t: translations[language]
     }}>
       {children}
     </LanguageContext.Provider>
