@@ -1,6 +1,5 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { api } from '../services/api';
 import BurgerMenu from '../components/BurgerMenu/BurgerMenu';
 import './CreateActivity.css';
 import { useLanguage } from '../context/LanguageContext';
@@ -52,21 +51,29 @@ export default function CreateActivity() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    
+
     const finalMaxPeople = unlimitedPeople ? 0 : formData.maxPeople;
-    
-    await addDoc(collection(db, 'activities'), {
+
+    const payload = {
       ...formData,
       maxPeople: finalMaxPeople,
-      people: [],
-      likes: [],
-      dislikes: [],
-      creatorId: user.uid,
-      creatorEmail: user.email,
-      createdAt: new Date().toISOString()
-    });
-    alert(t.activityUpdated || 'Активность создана!');
-    window.location.href = '/';
+      // Преобразуем строки в ISO-8601
+      startDate: new Date(formData.startDate).toISOString(),
+      endDate: new Date(formData.endDate).toISOString(),
+    };
+
+    try {
+      const response = await api.post('/activities', payload);
+      if (response.status === 201) {
+        alert(t.activityCreated || 'Активность создана!');
+        window.location.href = '/';
+      } else {
+        alert(response.error || t.error);
+      }
+    } catch (error) {
+      console.error('Ошибка создания активности', error);
+      alert(t.error);
+    }
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -104,7 +111,7 @@ export default function CreateActivity() {
             placeholder={t.title}
             required
           />
-          
+
           <input
             name="location"
             value={formData.location}
@@ -112,7 +119,7 @@ export default function CreateActivity() {
             placeholder={t.location}
             required
           />
-          
+
           <label>{t.category}:</label>
           <select
             name="category"
@@ -126,7 +133,7 @@ export default function CreateActivity() {
               </option>
             ))}
           </select>
-          
+
           <label>{t.startTimeLabel}:</label>
           <input
             type="datetime-local"
@@ -135,7 +142,7 @@ export default function CreateActivity() {
             onChange={handleChange}
             required
           />
-          
+
           <label>{t.endTimeLabel}:</label>
           <input
             type="datetime-local"
@@ -144,7 +151,7 @@ export default function CreateActivity() {
             onChange={handleChange}
             required
           />
-          
+
           <div className="max-people-container">
             <div className="unlimited-checkbox">
               <input
@@ -155,7 +162,7 @@ export default function CreateActivity() {
               />
               <label htmlFor="unlimitedPeople">{t.unlimitedParticipants}</label>
             </div>
-            
+
             {!unlimitedPeople && (
               <div className="max-people-input">
                 <label htmlFor="maxPeople">{t.maxPeople}:</label>
@@ -173,7 +180,7 @@ export default function CreateActivity() {
               </div>
             )}
           </div>
-          
+
           <textarea
             name="description"
             value={formData.description}
@@ -181,7 +188,7 @@ export default function CreateActivity() {
             placeholder={t.description}
             required
           />
-          
+
           <button type="submit">{t.create}</button>
         </form>
       </div>

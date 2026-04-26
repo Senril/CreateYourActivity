@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { useLocation } from 'react-router-dom';
+import { api } from '../services/api';
 import ActivityItem from '../components/ActivityItem/ActivityItem';
 import './Home.css';
 import { useLanguage } from '../context/LanguageContext';
@@ -15,54 +15,65 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<SortOption>('date');
   const { t } = useLanguage();
   const { user, isAdmin, isSuperAdmin } = useAdmin();
+  const location = useLocation(); 
 
   useEffect(() => {
     const fetchActivities = async () => {
-      const querySnapshot = await getDocs(collection(db, 'activities'));
-      const activitiesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        title: doc.data().title || '',
-        location: doc.data().location || '',
-        startDate: doc.data().startDate || '',
-        endDate: doc.data().endDate || '',
-        maxPeople: doc.data().maxPeople || 0,
-        people: doc.data().people || [],
-        creatorId: doc.data().creatorId || '',
-        creatorEmail: doc.data().creatorEmail || '',
-        description: doc.data().description || '',
-        category: doc.data().category || 'Другое',
-        likes: doc.data().likes || [],
-        dislikes: doc.data().dislikes || []
-      })) as Activity[];
-      setActivities(activitiesData);
+      try {
+        const response = await api.get<any>('/activities?page=0&size=100&sortBy=startDate&sortDir=desc');
+        if (response.data?.content) {
+          // Преобразуем данные к формату Activity
+          const mapped: Activity[] = response.data.content.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            location: item.location,
+            startDate: item.startDate,
+            endDate: item.endDate,
+            description: item.description,
+            maxPeople: item.maxPeople,
+            people: [], // participants будем получать отдельно при необходимости
+            creatorId: item.creatorId,
+            creatorEmail: item.creatorEmail,
+            category: item.category,
+            likes: Array(item.likesCount).fill(''), // для совместимости
+            dislikes: Array(item.dislikesCount).fill(''),
+            isLiked: item.isLiked || false,
+            isDisliked: item.isDisliked || false
+          }));
+          setActivities(mapped);
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки активностей', error);
+      }
     };
     fetchActivities();
-  }, []);
+  }, [location.key]);
 
   const handleDelete = async (id: string) => {
     if (window.confirm(t.areYouSure)) {
-      await deleteDoc(doc(db, 'activities', id));
-      setActivities(prev => prev.filter(a => a.id !== id));
-      alert(t.activityDeleted);
+      const response = await api.delete(`/activities/${id}`);
+      if (response.status === 204) {
+        setActivities(prev => prev.filter(a => a.id !== id));
+        alert(t.activityDeleted);
+      } else {
+        alert(t.error);
+      }
     }
   };
 
-  // Функция для получения статуса активности
   const getActivityStatus = (activity: Activity) => {
     try {
       const now = new Date();
       const start = new Date(activity.startDate);
       const end = new Date(activity.endDate);
-      
-      if (now < start) return 1; // upcoming
-      if (now > end) return 3; // finished
-      return 2; // active
-    } catch (error) {
-      return 0; // unknown
+      if (now < start) return 1;
+      if (now > end) return 3;
+      return 2;
+    } catch {
+      return 0;
     }
   };
 
-  // Сортировка активностей
   const sortedActivities = [...activities].sort((a, b) => {
     switch (sortBy) {
       case 'date':
@@ -87,28 +98,16 @@ export default function Home() {
           <div className="sort-controls">
             <span className="sort-label">{t.sortBy}:</span>
             <div className="sort-buttons">
-              <button 
-                className={sortBy === 'date' ? 'active' : ''}
-                onClick={() => setSortBy('date')}
-              >
+              <button className={sortBy === 'date' ? 'active' : ''} onClick={() => setSortBy('date')}>
                 {t.sortByDate}
               </button>
-              <button 
-                className={sortBy === 'likes' ? 'active' : ''}
-                onClick={() => setSortBy('likes')}
-              >
+              <button className={sortBy === 'likes' ? 'active' : ''} onClick={() => setSortBy('likes')}>
                 {t.sortByLikes}
               </button>
-              <button 
-                className={sortBy === 'dislikes' ? 'active' : ''}
-                onClick={() => setSortBy('dislikes')}
-              >
+              <button className={sortBy === 'dislikes' ? 'active' : ''} onClick={() => setSortBy('dislikes')}>
                 {t.sortByDislikes}
               </button>
-              <button 
-                className={sortBy === 'status' ? 'active' : ''}
-                onClick={() => setSortBy('status')}
-              >
+              <button className={sortBy === 'status' ? 'active' : ''} onClick={() => setSortBy('status')}>
                 {t.sortByStatus}
               </button>
             </div>
@@ -122,7 +121,7 @@ export default function Home() {
         ) : (
           <div className="activities-list">
             {sortedActivities.map(activity => (
-              <ActivityItem 
+              <ActivityItem
                 key={activity.id}
                 activity={activity}
                 currentUserId={user?.uid || ''}

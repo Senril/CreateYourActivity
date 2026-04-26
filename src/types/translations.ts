@@ -88,6 +88,7 @@ export interface Translations {
   confirmDelete: string;
   adminAdded: string;
   adminRemoved: string;
+  activityCreated: string;
   activityDeleted: string;
   activityUpdated: string;
   error: string;

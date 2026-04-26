@@ -1,7 +1,6 @@
 import { useState, FormEvent, ChangeEvent, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { api } from '../services/api';
 import BurgerMenu from '../components/BurgerMenu/BurgerMenu';
 import './EditActivity.css';
 import { useLanguage } from '../context/LanguageContext';
@@ -57,47 +56,62 @@ export default function EditActivity() {
   useEffect(() => {
     const fetchActivity = async () => {
       if (!id) return;
-      
-      const docRef = doc(db, 'activities', id);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const maxPeople = data.maxPeople || 10;
-        
-        setFormData({
-          title: data.title || '',
-          location: data.location || '',
-          startDate: data.startDate || '',
-          endDate: data.endDate || '',
-          description: data.description || '',
-          maxPeople: maxPeople,
-          category: data.category || ACTIVITY_CATEGORIES[0]
-        });
-        
-        setUnlimitedPeople(maxPeople === 0);
-        setActivityCreatorId(data.creatorId || '');
+      try {
+        const response = await api.get<any>(`/activities/${id}`);
+        if (response.status === 200 && response.data) {
+          const data = response.data;
+          const maxPeople = data.maxPeople || 10;
+
+          // Преобразуем ISO даты в формат для datetime-local
+          const formatDateTime = (iso: string) => {
+            const date = new Date(iso);
+            return date.toISOString().slice(0, 16);
+          };
+
+          setFormData({
+            title: data.title || '',
+            location: data.location || '',
+            startDate: formatDateTime(data.startDate),
+            endDate: formatDateTime(data.endDate),
+            description: data.description || '',
+            maxPeople: maxPeople,
+            category: data.category || ACTIVITY_CATEGORIES[0]
+          });
+
+          setUnlimitedPeople(maxPeople === 0);
+          setActivityCreatorId(data.creatorId || '');
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки активности', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    
+
     fetchActivity();
   }, [id]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!id || (!isAdmin && user?.uid !== activityCreatorId)) return;
-    
+
     try {
       const finalMaxPeople = unlimitedPeople ? 0 : formData.maxPeople;
-      
-      await updateDoc(doc(db, 'activities', id), {
+
+      const payload = {
         ...formData,
         maxPeople: finalMaxPeople,
-        updatedAt: new Date().toISOString()
-      });
-      alert(t.activityUpdated);
-      navigate('/');
+        startDate: new Date(formData.startDate).toISOString(),
+        endDate: new Date(formData.endDate).toISOString(),
+      };
+
+      const response = await api.put(`/activities/${id}`, payload);
+      if (response.status === 200) {
+        alert(t.activityUpdated);
+        navigate('/');
+      } else {
+        alert(response.error || t.error);
+      }
     } catch (error) {
       console.error('Ошибка при обновлении активности:', error);
       alert(t.error);
@@ -106,12 +120,16 @@ export default function EditActivity() {
 
   const handleDelete = async () => {
     if (!id || (!isAdmin && user?.uid !== activityCreatorId)) return;
-    
+
     if (window.confirm(t.areYouSure)) {
       try {
-        await deleteDoc(doc(db, 'activities', id));
-        alert(t.activityDeleted);
-        navigate('/');
+        const response = await api.delete(`/activities/${id}`);
+        if (response.status === 204) {
+          alert(t.activityDeleted);
+          navigate('/');
+        } else {
+          alert(response.error || t.error);
+        }
       } catch (error) {
         console.error('Ошибка при удалении активности:', error);
         alert(t.error);
@@ -129,7 +147,7 @@ export default function EditActivity() {
   const handleUnlimitedChange = () => {
     const newUnlimitedState = !unlimitedPeople;
     setUnlimitedPeople(newUnlimitedState);
-    
+
     if (newUnlimitedState) {
       setFormData({
         ...formData,
@@ -143,13 +161,8 @@ export default function EditActivity() {
     }
   };
 
-  const formatDateTimeForInput = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toISOString().slice(0, 16);
-  };
-
   if (loading) return <div>{t.loading}</div>;
-  
+
   if (!isAdmin && user?.uid !== activityCreatorId) {
     return (
       <div className="edit-page">
@@ -175,7 +188,7 @@ export default function EditActivity() {
             placeholder={t.title}
             required
           />
-          
+
           <input
             name="location"
             value={formData.location}
@@ -183,7 +196,7 @@ export default function EditActivity() {
             placeholder={t.location}
             required
           />
-          
+
           <label>{t.category}:</label>
           <select
             name="category"
@@ -197,25 +210,25 @@ export default function EditActivity() {
               </option>
             ))}
           </select>
-          
+
           <label>{t.startTimeLabel}:</label>
           <input
             type="datetime-local"
             name="startDate"
-            value={formatDateTimeForInput(formData.startDate)}
+            value={formData.startDate}
             onChange={handleChange}
             required
           />
-          
+
           <label>{t.endTimeLabel}:</label>
           <input
             type="datetime-local"
             name="endDate"
-            value={formatDateTimeForInput(formData.endDate)}
+            value={formData.endDate}
             onChange={handleChange}
             required
           />
-          
+
           <div className="max-people-container">
             <div className="unlimited-checkbox">
               <input
@@ -226,7 +239,7 @@ export default function EditActivity() {
               />
               <label htmlFor="unlimitedPeople">{t.unlimitedParticipants}</label>
             </div>
-            
+
             {!unlimitedPeople && (
               <div className="max-people-input">
                 <label htmlFor="maxPeople">{t.maxPeople}:</label>
@@ -244,7 +257,7 @@ export default function EditActivity() {
               </div>
             )}
           </div>
-          
+
           <textarea
             name="description"
             value={formData.description}
@@ -253,7 +266,7 @@ export default function EditActivity() {
             required
             rows={5}
           />
-          
+
           <div className="form-actions">
             <button type="button" onClick={handleDelete} className="delete-btn">
               {t.delete}

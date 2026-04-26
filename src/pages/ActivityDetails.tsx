@@ -1,20 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { 
-  doc, 
-  getDoc, 
-  updateDoc, 
-  arrayUnion, 
-  arrayRemove,
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  orderBy,
-  Timestamp,
-  deleteDoc 
-} from 'firebase/firestore';
-import { auth, db } from '../services/firebase';
+import { api } from '../services/api';
 import BurgerMenu from '../components/BurgerMenu/BurgerMenu';
 import { useLanguage } from '../context/LanguageContext';
 import { useAdmin } from '../context/AdminContext';
@@ -26,7 +12,7 @@ interface Comment {
   text: string;
   userId: string;
   userEmail: string;
-  createdAt: Timestamp;
+  createdAt: string; // ISO строка
 }
 
 interface UserData {
@@ -45,84 +31,75 @@ export default function ActivityDetails() {
   const [newComment, setNewComment] = useState('');
   const [loadingComments, setLoadingComments] = useState(true);
   const [commentUsers, setCommentUsers] = useState<Map<string, UserData>>(new Map());
+  const [isLiked, setIsLiked] = useState(false);
+  const [isDisliked, setIsDisliked] = useState(false);
 
+  // Загрузка активности
   useEffect(() => {
     const fetchActivity = async () => {
       if (!id) return;
-      const docRef = doc(db, 'activities', id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setActivity(data);
-        if (user && data.people && data.people.includes(user.uid)) {
-          setIsParticipating(true);
+      try {
+        const response = await api.get<any>(`/activities/${id}`);
+        if (response.status === 200 && response.data) {
+          const data = response.data;
+          setActivity({
+            ...data,
+            currentParticipants: data.currentParticipants ?? 0,
+          });
+          setIsParticipating(data.isParticipating || false);
+          setIsLiked(data.isLiked || false);
+          setIsDisliked(data.isDisliked || false);
         }
+      } catch (error) {
+        console.error('Ошибка загрузки активности', error);
       }
     };
     fetchActivity();
   }, [id, user]);
 
+  // Загрузка комментариев
   useEffect(() => {
     const fetchComments = async () => {
       if (!id) return;
-      
       try {
-        const commentsRef = collection(db, 'activities', id, 'comments');
-        const q = query(commentsRef, orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        
-        const commentsData: Comment[] = [];
-        querySnapshot.forEach((doc) => {
-          commentsData.push({
-            id: doc.id,
-            ...doc.data()
-          } as Comment);
-        });
-        
-        setComments(commentsData);
-        
-        // Загружаем данные пользователей для комментариев
-        const usersMap = new Map<string, UserData>();
-        const uniqueUserIds = new Set(commentsData.map(comment => comment.userId));
-        
-        // Используем Array.from для итерации по Set
-        const userIdsArray = Array.from(uniqueUserIds);
-        const promises = userIdsArray.map(async (userId) => {
-          try {
-            const userDoc = await getDoc(doc(db, 'users', userId));
-            if (userDoc.exists()) {
-              const data = userDoc.data();
-              usersMap.set(userId, {
-                firstName: data.firstName || '',
-                lastName: data.lastName || '',
-                email: data.email || ''
-              });
+        const response = await api.get<Comment[]>(`/activities/${id}/comments`);
+        if (response.status === 200 && response.data) {
+          const commentsData = response.data;
+          setComments(commentsData);
+
+          // Загружаем данные пользователей для комментариев
+          const usersMap = new Map<string, UserData>();
+          const uniqueUserIds = new Set(commentsData.map(c => c.userId));
+          const userIdsArray = Array.from(uniqueUserIds);
+          const promises = userIdsArray.map(async (userId) => {
+            try {
+              // Здесь можно сделать запрос к /users/{userId}, но у нас нет такого эндпоинта.
+              // Временно используем данные из userProfile или оставим только email.
+              // Пока пропустим, чтобы не усложнять.
+            } catch (error) {
+              console.error(`Ошибка загрузки пользователя ${userId}`, error);
             }
-          } catch (error) {
-            console.error(`Ошибка загрузки данных пользователя ${userId}:`, error);
-          }
-        });
-        
-        await Promise.all(promises);
-        setCommentUsers(usersMap);
+          });
+          await Promise.all(promises);
+          setCommentUsers(usersMap);
+        }
       } catch (error) {
-        console.error('Ошибка загрузки комментариев:', error);
+        console.error('Ошибка загрузки комментариев', error);
       } finally {
         setLoadingComments(false);
       }
     };
-
     fetchComments();
   }, [id]);
 
   const getStatus = () => {
     if (!activity) return { type: 'active', color: '#9e9e9e', text: t.unknown };
-    
+
     try {
       const now = new Date();
       const start = new Date(activity.startDate);
       const end = new Date(activity.endDate);
-      
+
       if (now < start) {
         return { type: 'upcoming', color: '#ff9800', text: t.upcoming };
       } else if (now > end) {
@@ -130,22 +107,20 @@ export default function ActivityDetails() {
       } else {
         return { type: 'active', color: '#4CAF50', text: t.active };
       }
-    } catch (error) {
+    } catch {
       return { type: 'active', color: '#9e9e9e', text: t.unknown };
     }
   };
 
   const getParticipationText = () => {
     const status = getStatus();
-    
     if (!isParticipating) return '';
-    
+
     switch (status.type) {
       case 'upcoming':
         return t.willParticipate;
       case 'finished':
         return t.participated;
-      case 'active':
       default:
         return t.youParticipate;
     }
@@ -159,22 +134,26 @@ export default function ActivityDetails() {
     }
     
     // Проверка на максимальное количество участников
-    if (activity.maxPeople > 0 && activity.people?.length >= activity.maxPeople) {
+    if (activity.maxPeople > 0 && activity.currentParticipants >= activity.maxPeople) {
       alert(t.cannotJoinMaxParticipants);
       return;
     }
     
     if (!id || !user) return;
     
-    await updateDoc(doc(db, 'activities', id), {
-      people: arrayUnion(user.uid)
-    });
-    setIsParticipating(true);
-    setActivity({
-      ...activity,
-      people: [...activity.people, user.uid]
-    });
-    alert(t.joinSuccess);
+    try {
+      await api.post(`/activities/${id}/join`);
+      setIsParticipating(true);
+      setActivity((prev: any) => ({
+        ...prev,
+        currentParticipants: (prev.currentParticipants || 0) + 1,
+        isParticipating: true
+      }));
+      alert(t.joinSuccess);
+    } catch (error) {
+      console.error('Ошибка присоединения:', error);
+      alert(t.error);
+    }
   };
 
   const handleLeave = async () => {
@@ -186,90 +165,75 @@ export default function ActivityDetails() {
     
     if (!id || !user) return;
     
-    await updateDoc(doc(db, 'activities', id), {
-      people: arrayRemove(user.uid)
-    });
-    setIsParticipating(false);
-    setActivity({
-      ...activity,
-      people: activity.people.filter((userId: string) => userId !== user.uid)
-    });
-    alert(t.leaveSuccess);
+    try {
+      await api.post(`/activities/${id}/leave`);
+      setIsParticipating(false);
+      setActivity((prev: any) => ({
+        ...prev,
+        currentParticipants: Math.max((prev.currentParticipants || 1) - 1, 0),
+        isParticipating: false
+      }));
+      alert(t.leaveSuccess);
+    } catch (error) {
+      console.error('Ошибка выхода:', error);
+      alert(t.error);
+    }
   };
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id || !newComment.trim()) return;
-    
     if (!user) return;
-    
+
     try {
-      const commentsRef = collection(db, 'activities', id, 'comments');
-      await addDoc(commentsRef, {
-        text: newComment.trim(),
-        userId: user.uid,
-        userEmail: user.email,
-        createdAt: Timestamp.now()
-      });
-      
-      setNewComment('');
-      alert(t.commentAdded);
-      
-      // Обновляем список комментариев
-      const q = query(commentsRef, orderBy('createdAt', 'desc'));
-      const querySnapshot = await getDocs(q);
-      const commentsData: Comment[] = [];
-      querySnapshot.forEach((doc) => {
-        commentsData.push({
-          id: doc.id,
-          ...doc.data()
-        } as Comment);
-      });
-      setComments(commentsData);
-      
-      // Добавляем данные текущего пользователя в карту
-      if (userProfile) {
-        const newUserData: UserData = {
-          firstName: userProfile.firstName || '',
-          lastName: userProfile.lastName || '',
-          email: user.email || ''
-        };
-        setCommentUsers(prev => new Map(prev).set(user.uid, newUserData));
+      const response = await api.post<Comment>(`/activities/${id}/comments`, { text: newComment.trim() });
+      if (response.status === 201 && response.data) {
+        const newCommentData = response.data;
+        setComments(prev => [newCommentData, ...prev]);
+        setNewComment('');
+        alert(t.commentAdded);
+        // Обновить кэш пользователей
+        if (userProfile) {
+          setCommentUsers(prev => new Map(prev).set(user.uid!, {
+            firstName: userProfile.firstName,
+            lastName: userProfile.lastName,
+            email: user.email!
+          }));
+        }
+      } else {
+        alert(response.error || t.commentError);
       }
     } catch (error) {
-      console.error('Ошибка отправки комментария:', error);
+      console.error('Ошибка отправки комментария', error);
       alert(t.commentError);
     }
   };
 
   const canDeleteComment = (comment: Comment) => {
     if (!user) return false;
-
     const isOwnComment = comment.userId === user.uid;
     const isCommentBySuperAdmin = comment.userEmail === 'basamykinaa21@oiate.ru';
 
-    // Суперадмин может удалить любой комментарий
     if (isSuperAdmin) return true;
-    
-    // Админ может удалить любой комментарий, кроме комментариев суперадмина
     if (isAdmin && !isCommentBySuperAdmin) return true;
-    
-    // Пользователь может удалить свой комментарий
     if (isOwnComment) return true;
-
     return false;
   };
 
   const handleDeleteComment = async (comment: Comment) => {
     if (!id) return;
-    
+
     if (window.confirm(t.confirmDeleteComment)) {
       try {
-        await deleteDoc(doc(db, 'activities', id, 'comments', comment.id));
-        setComments(prev => prev.filter(c => c.id !== comment.id));
-        alert(t.commentDeleted);
+        const response = await api.delete(`/comments/${comment.id}`);
+        if (response.status === 204) {
+          setComments(prev => prev.filter(c => c.id !== comment.id));
+          alert(t.commentDeleted);
+        } else {
+          alert(response.error || t.error);
+        }
       } catch (error) {
-        console.error('Ошибка при удалении комментария:', error);
+        console.error('Ошибка удаления комментария', error);
         alert(t.error);
       }
     }
@@ -285,26 +249,25 @@ export default function ActivityDetails() {
         hour: '2-digit',
         minute: '2-digit'
       });
-    } catch (error) {
+    } catch {
       return dateString;
     }
   };
 
-  const formatCommentTime = (timestamp: Timestamp) => {
+  const formatCommentTime = (dateString: string) => {
     try {
-      const date = timestamp.toDate();
+      const date = new Date(dateString);
       return date.toLocaleString('ru-RU', {
         day: '2-digit',
         month: '2-digit',
         hour: '2-digit',
         minute: '2-digit'
       });
-    } catch (error) {
+    } catch {
       return t.unknown;
     }
   };
 
-  // Функция для получения отображаемого имени пользователя
   const getDisplayName = (userId: string, userEmail: string) => {
     const userData = commentUsers.get(userId);
     if (userData && userData.firstName && userData.lastName) {
@@ -325,28 +288,26 @@ export default function ActivityDetails() {
       <BurgerMenu />
       <div className="content">
         <h1>{activity.title}</h1>
-        
-        {/* Бейдж статуса активности */}
-        <div 
-          className="activity-status-badge" 
-          style={{ 
+
+        <div
+          className="activity-status-badge"
+          style={{
             backgroundColor: status.color,
             color: status.type === 'upcoming' ? '#000' : '#fff'
           }}
         >
           {status.text}
         </div>
-        
+
         <div className="details-card">
           <p><strong>{t.location}:</strong> {activity.location}</p>
           <p><strong>{t.category}:</strong> {translatedCategory}</p>
           <p><strong>{t.date}:</strong> {formatDateTime(activity.startDate)} - {formatDateTime(activity.endDate)}</p>
           <p><strong>{t.description}:</strong> {activity.description}</p>
           <p><strong>{t.creator}:</strong> {activity.creatorEmail}</p>
-          <p><strong>{t.participants}:</strong> {activity.people?.length || 0}/{activity.maxPeople > 0 ? activity.maxPeople : '∞'}</p>
-          <p><strong>{t.likes}:</strong> {activity.likes?.length || 0} | <strong>{t.dislikes}:</strong> {activity.dislikes?.length || 0}</p>
-          
-          {/* Управление участием */}
+          <p><strong>{t.participants}:</strong> {activity.currentParticipants || 0}/{activity.maxPeople > 0 ? activity.maxPeople : '∞'}</p>
+          <p><strong>{t.likes}:</strong> {activity.likesCount || 0} | <strong>{t.dislikes}:</strong> {activity.dislikesCount || 0}</p>
+
           {!isActivityFinished ? (
             isParticipating ? (
               <div className="participation-controls">
@@ -356,10 +317,11 @@ export default function ActivityDetails() {
                 </button>
               </div>
             ) : (
-              <button 
-                onClick={handleJoin} 
-                className="join-btn" 
-                disabled={activity.maxPeople > 0 && activity.people?.length >= activity.maxPeople}
+              <button
+                onClick={handleJoin}
+                className="join-btn"
+                type="button"
+                disabled={activity.maxPeople > 0 && (activity.currentParticipants || 0) >= activity.maxPeople}
               >
                 {t.join}
               </button>
@@ -374,10 +336,9 @@ export default function ActivityDetails() {
           )}
         </div>
 
-        {/* Секция комментариев */}
         <div className="comments-section">
           <h2>{t.comments} ({comments.length})</h2>
-          
+
           <form onSubmit={handleCommentSubmit} className="comment-form">
             <textarea
               value={newComment}
@@ -390,7 +351,7 @@ export default function ActivityDetails() {
               {t.send}
             </button>
           </form>
-          
+
           {loadingComments ? (
             <div className="loading-comments">{t.loadingComments}</div>
           ) : comments.length === 0 ? (
@@ -400,10 +361,10 @@ export default function ActivityDetails() {
               {comments.map((comment) => {
                 const isOwnComment = comment.userId === user?.uid;
                 const displayName = getDisplayName(comment.userId, comment.userEmail);
-                
+
                 return (
-                  <div 
-                    key={comment.id} 
+                  <div
+                    key={comment.id}
                     className={`comment-item ${isOwnComment ? 'own-comment' : 'other-comment'}`}
                   >
                     <div className="comment-header">
@@ -412,7 +373,7 @@ export default function ActivityDetails() {
                     <div className="comment-content">
                       <div className="comment-text">{comment.text}</div>
                       {canDeleteComment(comment) && (
-                        <button 
+                        <button
                           className="delete-comment-btn"
                           onClick={() => handleDeleteComment(comment)}
                           title={t.deleteComment}

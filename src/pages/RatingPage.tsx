@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { api } from '../services/api';
 import BurgerMenu from '../components/BurgerMenu/BurgerMenu';
 import './RatingPage.css';
 import { useLanguage } from '../context/LanguageContext';
@@ -9,9 +8,9 @@ interface Activity {
   id: string;
   title: string;
   category: string;
-  likes: string[];
-  dislikes: string[];
-  people: string[];
+  likesCount: number;
+  dislikesCount: number;
+  participantsCount: number;
 }
 
 interface CategoryStats {
@@ -32,19 +31,25 @@ export default function RatingPage() {
 
   useEffect(() => {
     const fetchActivities = async () => {
-      const querySnapshot = await getDocs(collection(db, 'activities'));
-      const activitiesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        title: doc.data().title || '',
-        category: doc.data().category || 'Другое',
-        likes: doc.data().likes || [],
-        dislikes: doc.data().dislikes || [],
-        people: doc.data().people || []
-      })) as Activity[];
-      setActivities(activitiesData);
-      setLoading(false);
+      try {
+        const response = await api.get<any>('/activities?page=0&size=100&sortBy=startDate&sortDir=desc');
+        if (response.data?.content) {
+          const mapped: Activity[] = response.data.content.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            category: item.category,
+            likesCount: item.likesCount || 0,
+            dislikesCount: item.dislikesCount || 0,
+            participantsCount: item.currentParticipants || 0,
+          }));
+          setActivities(mapped);
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки активностей', error);
+      } finally {
+        setLoading(false);
+      }
     };
-    
     fetchActivities();
   }, []);
 
@@ -52,7 +57,7 @@ export default function RatingPage() {
     if (activities.length === 0) return;
 
     const categoryMap = new Map<string, CategoryStats>();
-    
+
     activities.forEach(activity => {
       const category = activity.category;
       const current = categoryMap.get(category) || {
@@ -63,22 +68,22 @@ export default function RatingPage() {
         totalParticipants: 0,
         averageRating: 0
       };
-      
+
       current.totalActivities += 1;
-      current.totalLikes += activity.likes.length;
-      current.totalDislikes += activity.dislikes.length;
-      current.totalParticipants += activity.people.length;
-      
+      current.totalLikes += activity.likesCount;
+      current.totalDislikes += activity.dislikesCount;
+      current.totalParticipants += activity.participantsCount;
+
       categoryMap.set(category, current);
     });
-    
+
     const stats = Array.from(categoryMap.values()).map(stat => ({
       ...stat,
-      averageRating: stat.totalLikes + stat.totalDislikes > 0 
-        ? Math.round((stat.totalLikes / (stat.totalLikes + stat.totalDislikes)) * 100) 
+      averageRating: stat.totalLikes + stat.totalDislikes > 0
+        ? Math.round((stat.totalLikes / (stat.totalLikes + stat.totalDislikes)) * 100)
         : 0
     }));
-    
+
     const sortedStats = stats.sort((a, b) => {
       switch (sortBy) {
         case 'rating':
@@ -91,16 +96,16 @@ export default function RatingPage() {
           return b.averageRating - a.averageRating;
       }
     });
-    
+
     setCategoryStats(sortedStats);
   }, [activities, sortBy]);
 
   const mostLikedActivities = [...activities]
-    .sort((a, b) => b.likes.length - a.likes.length)
+    .sort((a, b) => b.likesCount - a.likesCount)
     .slice(0, 5);
 
   const mostParticipatedActivities = [...activities]
-    .sort((a, b) => b.people.length - a.people.length)
+    .sort((a, b) => b.participantsCount - a.participantsCount)
     .slice(0, 5);
 
   if (loading) return <div className="loading">{t.loading}</div>;
@@ -110,7 +115,7 @@ export default function RatingPage() {
       <BurgerMenu />
       <div className="content">
         <h1>{t.activityRating}</h1>
-        
+
         <div className="stats-overview">
           <div className="stat-card">
             <h3>{t.totalActivities}</h3>
@@ -119,13 +124,13 @@ export default function RatingPage() {
           <div className="stat-card">
             <h3>{t.totalLikes}</h3>
             <div className="stat-value">
-              {activities.reduce((sum, activity) => sum + activity.likes.length, 0)}
+              {activities.reduce((sum, a) => sum + a.likesCount, 0)}
             </div>
           </div>
           <div className="stat-card">
             <h3>{t.totalParticipants}</h3>
             <div className="stat-value">
-              {activities.reduce((sum, activity) => sum + activity.people.length, 0)}
+              {activities.reduce((sum, a) => sum + a.participantsCount, 0)}
             </div>
           </div>
         </div>
@@ -133,19 +138,19 @@ export default function RatingPage() {
         <div className="sort-controls">
           <h3>{t.sortCategoriesBy}</h3>
           <div className="sort-buttons">
-            <button 
+            <button
               className={sortBy === 'rating' ? 'active' : ''}
               onClick={() => setSortBy('rating')}
             >
               {t.byRating}
             </button>
-            <button 
+            <button
               className={sortBy === 'activities' ? 'active' : ''}
               onClick={() => setSortBy('activities')}
             >
               {t.byActivities}
             </button>
-            <button 
+            <button
               className={sortBy === 'participants' ? 'active' : ''}
               onClick={() => setSortBy('participants')}
             >
@@ -177,10 +182,10 @@ export default function RatingPage() {
                 <div>{stat.totalParticipants}</div>
                 <div className="rating-cell">
                   <div className="rating-bar">
-                    <div 
+                    <div
                       className="rating-fill"
                       style={{ width: `${stat.averageRating}%` }}
-                    ></div>
+                    />
                   </div>
                   <span className="rating-value">{stat.averageRating}%</span>
                 </div>
@@ -199,7 +204,7 @@ export default function RatingPage() {
                   <div className="popular-info">
                     <div className="popular-title">{activity.title}</div>
                     <div className="popular-stats">
-                      <span className="likes">👍 {activity.likes.length}</span>
+                      <span className="likes">👍 {activity.likesCount}</span>
                       <span className="category">{activity.category}</span>
                     </div>
                   </div>
@@ -217,7 +222,7 @@ export default function RatingPage() {
                   <div className="popular-info">
                     <div className="popular-title">{activity.title}</div>
                     <div className="popular-stats">
-                      <span className="participants">👥 {activity.people.length}</span>
+                      <span className="participants">👥 {activity.participantsCount}</span>
                       <span className="category">{activity.category}</span>
                     </div>
                   </div>

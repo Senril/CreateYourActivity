@@ -1,20 +1,11 @@
-import { auth, googleProvider } from '../services/firebase';
-import { signInWithPopup } from 'firebase/auth';
-import { useNavigate } from 'react-router-dom';
-import './Login.css';
 import { useLanguage } from '../context/LanguageContext';
+import './Login.css';
 
 export default function Login() {
-  const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const handleGoogleLogin = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider);
-      navigate('/');
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
-    }
+  const handleGoogleLogin = () => {
+    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
   };
 
   return (

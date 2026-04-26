@@ -91,6 +91,7 @@ const ru: Translations = {
   adminAdded: "Администратор успешно добавлен",
   adminRemoved: "Администратор успешно удалён",
   activityDeleted: "Активность успешно удалена",
+  activityCreated: "Активность успешно создана",
   activityUpdated: "Активность успешно обновлена",
   error: "Ошибка",
   success: "Успешно",

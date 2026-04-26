@@ -10,8 +10,14 @@ export interface Activity {
   creatorId: string;
   creatorEmail: string;
   createdAt?: string;
-    category: string;
+  category: string;
   likes: string[];
   dislikes: string[];
+  isLiked?: boolean;
+  isDisliked?: boolean;
+  isParticipating?: boolean;
+  currentParticipants?: number;
+  likesCount?: number;
+  dislikesCount?: number;
 
 }

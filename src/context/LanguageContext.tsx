@@ -91,6 +91,7 @@ const defaultTranslations: Translations = {
   adminAdded: "Administrator added successfully",
   adminRemoved: "Administrator removed successfully",
   activityDeleted: "Activity deleted successfully",
+  activityCreated: "Activity created successfully",
   activityUpdated: "Activity updated successfully",
   error: "Error",
   success: "Success",
