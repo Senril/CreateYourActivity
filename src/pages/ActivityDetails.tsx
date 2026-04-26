@@ -46,9 +46,9 @@ export default function ActivityDetails() {
             ...data,
             currentParticipants: data.currentParticipants ?? 0,
           });
-          setIsParticipating(data.isParticipating || false);
-          setIsLiked(data.isLiked || false);
-          setIsDisliked(data.isDisliked || false);
+          setIsParticipating(data.isParticipating ?? data.participating ?? false);
+          setIsLiked(data.isLiked ?? data.liked ?? false);
+          setIsDisliked(data.isDisliked ?? data.disliked ?? false);
         }
       } catch (error) {
         console.error('Ошибка загрузки активности', error);

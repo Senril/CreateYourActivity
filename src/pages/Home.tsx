@@ -31,14 +31,18 @@ export default function Home() {
             endDate: item.endDate,
             description: item.description,
             maxPeople: item.maxPeople,
-            people: [], // participants будем получать отдельно при необходимости
+            people: [],
             creatorId: item.creatorId,
             creatorEmail: item.creatorEmail,
             category: item.category,
             likes: Array(item.likesCount).fill(''), // для совместимости
             dislikes: Array(item.dislikesCount).fill(''),
-            isLiked: item.isLiked || false,
-            isDisliked: item.isDisliked || false
+            isLiked: item.isLiked ?? item.liked ?? false,
+            isDisliked: item.isDisliked ?? item.disliked ?? false,
+            isParticipating: item.isParticipating ?? item.participating ?? false,
+            currentParticipants: item.currentParticipants ?? 0,
+            likesCount: item.likesCount ?? 0,
+            dislikesCount: item.dislikesCount ?? 0
           }));
           setActivities(mapped);
         }

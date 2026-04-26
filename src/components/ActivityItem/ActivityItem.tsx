@@ -33,7 +33,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
   const canDelete = isAdmin || activity.creatorId === currentUserId;
   const canEdit = isAdmin || activity.creatorId === currentUserId;
 
-  const currentParticipants = activity.people?.length || 0;
+  const currentParticipants = activity.currentParticipants ?? activity.people?.length ?? 0;
 
   const [localLikes, setLocalLikes] = useState<string[]>(activity.likes || []);
   const [localDislikes, setLocalDislikes] = useState<string[]>(activity.dislikes || []);
@@ -90,7 +90,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
 
   const getParticipationText = () => {
     const status = getStatus();
-    const isParticipating = activity.people?.includes(currentUserId) || false;
+    const isParticipating = activity.isParticipating ?? activity.people?.includes(currentUserId) ?? false;
 
     if (!isParticipating) return '';
 
@@ -166,7 +166,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({
 
   const status = getStatus();
   const participationText = getParticipationText();
-  const isParticipating = activity.people?.includes(currentUserId) || false;
+  const isParticipating = activity.isParticipating ?? activity.people?.includes(currentUserId) ?? false;
 
   const displayName = creatorData
     ? (creatorData.firstName && creatorData.lastName
